@@ -54,7 +54,7 @@ class SqlParser:
 			else:
 				modules[mname][k] = self.app[k]
 
-		print(json.dumps(modules))
+		#print(json.dumps(modules))
 
 		return modules
 
@@ -113,8 +113,8 @@ class SqlParser:
 		col_key = items[6]
 		parent_table = items[8].replace('"','')
 
-		print("parent", parent_table)
-		print("child", child_table)
+		#print("parent", parent_table)
+		#print("child", child_table)
 
 		parent_module = self.app[parent_table]['comment']['module']
 		child_module = self.app[child_table]['comment']['module']
@@ -124,7 +124,8 @@ class SqlParser:
 			"relation":"belongsTo",
 			"table":parent_table,
 			"key":col_key,
-			"module":parent_module
+			"module":parent_module,
+			"owner":child_table
 		})
 		
 		#add child ref
@@ -134,6 +135,9 @@ class SqlParser:
 			"key":col_key,
 			"module":child_module
 		})
+
+
+
 
 def setupPathFolder(fp):
 	if not os.path.exists(fp):
@@ -175,8 +179,11 @@ def generate_api(fp, mname, db_models, config):
 
 	f = open(fp, "w")
 
+	#keeps track off all function names we're generating for relations
+	generated = {}
+
 	headerT = templateEnv.get_template( "/api/api_header.go")
-	packages = ["net/http","github.com/futuresignal/user_api/modules/utils", "github.com/gorilla/mux", "strconv", "fmt", "log", "encoding/json"]
+	packages = ["net/http",config["path"]+"/modules/utils", "github.com/gorilla/mux", "strconv", "fmt", "log", "encoding/json"]
 	header = headerT.render(module_name=mname, packages=packages, date=time.strftime("%m/%d/%Y"))
 	f.write(header)
 
@@ -199,7 +206,7 @@ def generate_api(fp, mname, db_models, config):
 		for rel in db_models[mname][submodule]["relations"]:
 			if rel['relation'] == 'belongsTo':
 				get_children = templateEnv.get_template( "/api/get_children.go")
-				f.write(get_children.render(table_name=submodule, table_parent=rel['table'], struct_name=struct_name))
+				f.write(get_children.render(table_name=submodule, table_parent_fkey=rel["key"], struct_name=struct_name))
 
 	f.close()
 
@@ -249,7 +256,7 @@ def generate_db(fp, mname, db_models, config):
 	f = open(fp, "w")
 
 	headerT = templateEnv.get_template( "/db/db_header.go")
-	packages = ["database/sql","time", "github.com/futuresignal/user_api/modules/utils"]
+	packages = ["database/sql","time", config["path"]+"/modules/utils"]
 	header = headerT.render(module_name=mname, packages=packages, date=time.strftime("%m/%d/%Y"))
 	f.write(header)
 

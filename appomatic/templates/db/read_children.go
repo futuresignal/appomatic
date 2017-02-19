@@ -1,6 +1,6 @@
 
 
-func ReadAll_{{table_name}}_By_{{rel['table']}}(fk int64) (bool, []{{struct_name}}){
+func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}){
 	items := make([]{{struct_name}}, 0)
 	rows, err := db.Query(`
 		SELECT *
@@ -9,7 +9,7 @@ func ReadAll_{{table_name}}_By_{{rel['table']}}(fk int64) (bool, []{{struct_name
 	defer rows.Close()
 
 	if err != nil {
-		utils.HandleDbError("ReadAll_{{table_name}}_By_{{rel['table']}}", err)
+		utils.HandleDbError("ReadAll_{{table_name}}_By_{{rel['key']}}", err)
 		return false, items
 	}
 
@@ -23,7 +23,7 @@ func ReadAll_{{table_name}}_By_{{rel['table']}}(fk int64) (bool, []{{struct_name
 
 
 		if err != nil {
-			utils.HandleDbError("Error scanning in ReadAll_{{table_name}}_By_{{rel['table']}}", err)
+			utils.HandleDbError("Error scanning in ReadAll_{{table_name}}_By_{{rel['key']}}", err)
 		}
 		items = append(items, item)
 	}

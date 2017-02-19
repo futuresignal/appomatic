@@ -1,0 +1,1 @@
+ALTER TABLE "{{table_name}}" ADD FOREIGN KEY ("{{key}}") REFERENCES "{{target}}" ("id");

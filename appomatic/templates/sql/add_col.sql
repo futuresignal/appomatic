@@ -1,0 +1,1 @@
+ALTER TABLE "{{table_name}}" ADD COLUMN "{{col_name}}" {{db_type}};

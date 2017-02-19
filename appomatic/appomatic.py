@@ -4,9 +4,10 @@
 
 	Generates Golang backend API from Postgresql sql
 """
-
-import sys,os,json
+from __future__ import print_function
+import sys,os,json,time
 from . import utils
+from . import sql_diff
 import pkg_resources
 
 def main():
@@ -15,31 +16,35 @@ def main():
         return
     config = json.loads(open(sys.argv[1],"r").read())
 
-    #preliminary dir
-    sql = utils.SqlParser(config["db_file"])
+    #generate our migration file if we have a prev_schema supplied
+    if "prev_schema" in config and config["prev_schema"] != "":
+        sql_diff.gen_migration(config["prev_schema"], config["schema"], config["migration"])
+        print("Migration file located at ", config["migration"])
+
+    #parse our sql into a dict respresentation of the models
+    sql = utils.SqlParser(config["schema"])
     db_models = sql.parse()
-    #print json.dumps(db_models)
 
     # Generate main file once
-    if not os.path.isfile("./main.go"):
-        utils.generate_main("./main.go", db_models, config)
+    if not os.path.isfile(os.getcwd()+"/main.go"):
+        utils.generate_main(os.getcwd()+"/main.go", db_models, config)
 
-    utils.generate_routes("./gen_routes.go", db_models, config)
+    utils.generate_routes(os.getcwd()+"/gen_routes.go", db_models, config)
 
     for m in db_models:
         #CORE API
-
         # Setup generated code in CWD (target project dir)
-        path = os.path.join(os.getcwd(), "modules", m)
+        #path = os.path.join(os.getcwd(), "modules", m)
+        path = "/".join([os.getcwd(), config["module_dir"], m, ""])
         utils.setupPathFolder(path)
         utils.generate_api(path+"gen_api.go", m, db_models, config)
         utils.generate_db(path+"gen_db.go", m, db_models, config)
         utils.generate_types(path+"gen_types.go", m, db_models, config)
 
         #helpful generated items
-        relPath = "/".join(["src", "queries", m])
-        querypath = pkg_resources.resource_filename(__name__, relPath)
-        utils.setupPathFolder(querypath)
-        utils.generate_curl_queries(querypath+"gen_queries.sh", m, db_models, config)
+        relPath = "/".join([os.getcwd(), config["tools_dir"], "queries", m, ""])
+        utils.setupPathFolder(relPath)
+        utils.generate_curl_queries(relPath+"gen_queries.sh", m, db_models, config)
 
     print("Generated ", len(db_models), " Modules ", sum([len(db_models[x]) for x in db_models]), " Submodules")
+
