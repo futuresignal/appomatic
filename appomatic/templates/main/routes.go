@@ -1,4 +1,4 @@
-package main
+package {{package}}
 
 /* Generated on {{date}} */
 

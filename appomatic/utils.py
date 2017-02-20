@@ -154,7 +154,8 @@ def generate_main(fp, db_models, config):
 def generate_routes(fp, db_models, config):
 	""" creates and adds any generated routes """
 	routes = templateEnv.get_template( "/main/routes.go")
-	s = routes.render(db_models=db_models, config=config, date=time.strftime("%m/%d/%Y"))
+
+	s = routes.render(db_models=db_models, config=config, date=time.strftime("%m/%d/%Y"), package=config["server_dir"])
 	f = open(fp, "w")
 	f.write(s)
 	f.close()

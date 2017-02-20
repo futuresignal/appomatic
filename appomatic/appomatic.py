@@ -29,7 +29,7 @@ def main():
     if not os.path.isfile(os.getcwd()+"/main.go"):
         utils.generate_main(os.getcwd()+"/main.go", db_models, config)
 
-    utils.generate_routes(os.getcwd()+"/gen_routes.go", db_models, config)
+    utils.generate_routes(os.getcwd()+"/"+config["server_dir"]+"/gen_routes.go", db_models, config)
 
     for m in db_models:
         #CORE API
