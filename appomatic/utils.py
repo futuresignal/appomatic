@@ -91,10 +91,14 @@ class SqlParser:
 		items = re.findall(r"\w+", line)
 		name = items[0].replace('"','')
 		col_type = items[1]
-		
+		db_type = col_type
+		#special case for varchar
+		if col_type == "VARCHAR":
+			db_type = col_type + "(" + items[2] + ")"
+
 		self.app[self.current_table]["columns"].append({
 			"title":name,
-			"db_type":col_type,
+			"db_type":db_type,
 			"go_type":postgres2go[col_type],
 			"struct_var":name[0].upper()+name[1:]
 		})
