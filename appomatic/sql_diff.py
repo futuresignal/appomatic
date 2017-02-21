@@ -111,10 +111,11 @@ def gen_migration(o, n, path):
 	f.write("--Deleted Relations\n")
 	#run our deletions first
 	for rel in deletions["relations"]:
-		#print(rel)
-		tmpl = templateEnv.get_template( "/sql/drop_fk.sql")
-		f.write(tmpl.render(table_name=rel["owner"], key=rel["key"]))
-		f.write("\n")
+		if rel["relation"] == "belongsTo":
+			#print(rel)
+			tmpl = templateEnv.get_template( "/sql/drop_fk.sql")
+			f.write(tmpl.render(table_name=rel["owner"], key=rel["key"]))
+			f.write("\n")
 	f.write("\n")
 	
 	f.write("--Deleted Tables\n")
