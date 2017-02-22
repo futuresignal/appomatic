@@ -11,7 +11,7 @@ func ReadOne_{{table_name}}(db_struct *{{struct_name}}) bool {
         {%endif%}{%endfor%})
 	
 	if err == sql.ErrNoRows{
-		return false, db_struct
+		return false
 	} else if err != nil {
 		utils.HandleDbError("ReadOne_{{struct_name}}",err)
 		return false
