@@ -268,16 +268,16 @@ def generate_db(fp, mname, db_models, config):
 	for submodule in db_models[mname]:
 		struct_name = submodule[0].upper() + submodule[1:]
 		post_columns = postCols(db_models[mname][submodule])
-		len_cols = len(post_columns)
+		len_post_cols = len(post_columns)
 
 		t = templateEnv.get_template( "/db/read_one.go")
-		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_cols, len_cols=len(db_models[mname][submodule]['columns'])))
+		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_post_cols, len_cols=len(db_models[mname][submodule]['columns'])))
 
 		t = templateEnv.get_template( "/db/create_one.go")
 
 		post_values  = postValues(db_models[mname][submodule])
 
-		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, post_values=post_values, len_cols=len_cols, model=db_models[mname][submodule]))
+		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, post_values=post_values, len_cols=len_post_cols, model=db_models[mname][submodule]))
 
 		put_one = templateEnv.get_template( "/db/update_one.go")
 		put_cols = putCols(db_models[mname][submodule])
@@ -296,7 +296,7 @@ def generate_db(fp, mname, db_models, config):
 				len_cols = len(db_models[mname][submodule]['columns'])
 				model = db_models[mname][submodule]
 				rel_struct = rel['table'][0].upper()+rel['table'][1:]
-				f.write(get_children.render(table_name=submodule, len_cols=len_cols, rel=rel, model=model, struct_name=struct_name))
+				f.write(get_children.render(table_name=submodule, len_cols=len_cols, rel=rel, model=model, struct_name=struct_name, post_columns=post_columns, len_post_cols=len_post_cols))
 
 	f.close()
 
