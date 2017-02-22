@@ -9,8 +9,10 @@ func ReadOne_{{table_name}}(db_struct *{{struct_name}}) bool {
 		{% for col in model['columns']%}
         &db_struct.{{col['struct_var']}}{% if loop.index is not equalto len_cols %},
         {%endif%}{%endfor%})
-
-	if err != nil {
+	
+	if err == sql.ErrNoRows{
+		return false, db_struct
+	} else if err != nil {
 		utils.HandleDbError("ReadOne_{{struct_name}}",err)
 		return false
 	}
