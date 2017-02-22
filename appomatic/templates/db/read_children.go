@@ -3,7 +3,8 @@
 func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}){
 	items := make([]{{struct_name}}, 0)
 	rows, err := db.Query(`
-		SELECT *
+		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
+		
 		FROM "{{table_name}}"
 		WHERE "{{rel['key']}}" = $1 AND "deleted" = 'f'`, &fk)
 	defer rows.Close()
@@ -29,4 +30,3 @@ func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}
 	}
 	return true, items
 }
-
