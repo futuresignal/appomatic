@@ -1,8 +1,8 @@
 
 func ReadOne_{{table_name}}(db_struct *{{struct_name}}) bool {
 	err := db.QueryRow(`
-		SELECT *
-		FROM "{{table_name}}" 
+		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
+		FROM "{{table_name}}"
 		WHERE id = $1
 		AND "deleted" = 'f'`, &db_struct.Id).Scan(
 		{% for col in model['columns']%}
@@ -14,5 +14,4 @@ func ReadOne_{{table_name}}(db_struct *{{struct_name}}) bool {
 		return false
 	}
 	return true
-} 
-
+}

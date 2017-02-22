@@ -10,8 +10,8 @@ templatePath = pkg_resources.resource_filename(resource_package, "templates")
 templateLoader = jinja2.FileSystemLoader( searchpath=templatePath )
 templateEnv = jinja2.Environment( loader=templateLoader, lstrip_blocks=True, trim_blocks=True )
 
-postgres2go = { 
-	
+postgres2go = {
+
 	'DATETIME':'*string',
 	'DATE':'*string',
 	'STRING':'*string',
@@ -29,8 +29,8 @@ postgres2go = {
 }
 
 class SqlParser:
-	""" 
-		a simple sql parser 
+	"""
+		a simple sql parser
 		returns a dict representation of the tables
 	"""
 	def __init__(self, db_path):
@@ -44,7 +44,7 @@ class SqlParser:
 		""" main function, runs the parser"""
 		for line in self.db_file:
 			self.parse_state(line)
-		
+
 		#package all of our tables into modules
 		modules = {}
 		for k in self.app:
@@ -131,7 +131,7 @@ class SqlParser:
 			"module":parent_module,
 			"owner":child_table
 		})
-		
+
 		#add child ref
 		self.app[parent_table]["relations"].append({
 			"relation":"hasMany",
@@ -165,7 +165,7 @@ def generate_routes(fp, db_models, config):
 	f.close()
 
 def okCols(model):
-	""" 
+	"""
 	Defines which columns can be overwritten in an update
 	"""
 	ok = {}
@@ -197,13 +197,13 @@ def generate_api(fp, mname, db_models, config):
 
 		get_one = templateEnv.get_template( "/api/get_one.go")
 		f.write(get_one.render(table_name=submodule, struct_name=struct_name))
-		
+
 		post_one = templateEnv.get_template( "/api/post_one.go")
 		f.write(post_one.render(table_name=submodule, struct_name=struct_name))
-		
+
 		put_one = templateEnv.get_template( "/api/put_onev2.go")
 		f.write(put_one.render(table_name=submodule, struct_name=struct_name))
-		
+
 		delete_one = templateEnv.get_template( "/api/delete_one.go")
 		f.write(delete_one.render(table_name=submodule, struct_name=struct_name))
 
@@ -267,20 +267,22 @@ def generate_db(fp, mname, db_models, config):
 
 	for submodule in db_models[mname]:
 		struct_name = submodule[0].upper() + submodule[1:]
+		post_columns = postCols(db_models[mname][submodule])
+		len_cols = len(post_columns)
 
 		t = templateEnv.get_template( "/db/read_one.go")
-		f.write(t.render(table_name=submodule, struct_name=struct_name,  model=db_models[mname][submodule], len_cols=len(db_models[mname][submodule]['columns'])))
-		
+		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_cols, len_cols=len(db_models[mname][submodule]['columns'])))
+
 		t = templateEnv.get_template( "/db/create_one.go")
-		post_columns = postCols(db_models[mname][submodule])
+
 		post_values  = postValues(db_models[mname][submodule])
-		len_cols = len(post_columns)
+
 		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, post_values=post_values, len_cols=len_cols, model=db_models[mname][submodule]))
-		
+
 		put_one = templateEnv.get_template( "/db/update_one.go")
 		put_cols = putCols(db_models[mname][submodule])
 		f.write(put_one.render(table_name=submodule, struct_name=struct_name, put_cols=put_cols, len_cols=len(put_cols)))
-		
+
 		delete_one = templateEnv.get_template( "/db/delete_one.go")
 		f.write(delete_one.render(table_name=submodule, struct_name=struct_name,))
 
@@ -290,7 +292,7 @@ def generate_db(fp, mname, db_models, config):
 				get_children = templateEnv.get_template( "/db/read_children.go")
 				#get relative module
 				#len_cols = len(db_models[rel_m][rel['table']]['columns'])
-				
+
 				len_cols = len(db_models[mname][submodule]['columns'])
 				model = db_models[mname][submodule]
 				rel_struct = rel['table'][0].upper()+rel['table'][1:]
@@ -311,20 +313,20 @@ def generate_types(fp, mname, db_models, config):
 	""" Generates our types file """
 
 	f = open(fp, "w")
-	t = templateEnv.get_template( "/types/types_header.go") 
+	t = templateEnv.get_template( "/types/types_header.go")
 	f.write(t.render(module_name=mname, date=time.strftime("%m/%d/%Y")))
 	for submodule in db_models[mname]:
 		struct_name = submodule[0].upper() + submodule[1:]
 		t = templateEnv.get_template( "/types/simple.go")
 		model = addSpacing(db_models[mname][submodule], 30)
 		f.write(t.render(table_name=submodule,  model=model, struct_name=struct_name))
-		
+
 	f.close()
 
 def json_type(model):
 	""" Adds default types to our model and creates a json string"""
 	j = {}
-	
+
 	exclude = ["date_created", "date_modified", "deleted"]
 	for col in model['columns']:
 		if col["title"] in exclude:
@@ -338,24 +340,24 @@ def json_type(model):
 		elif col["db_type"] == 'TEXT':
 			j[col["title"]] = ""
 		elif col["db_type"] == 'BOOLEAN':
-			j[col["title"]] = False	
+			j[col["title"]] = False
 	return json.dumps(j)
 
 def generate_curl_queries(fp, mname, db_models, config):
 	""" for each of our modules, generate sample curl queries"""
 	f = open(fp, "w")
-	
+
 	for sub in db_models[mname]:
 		t = templateEnv.get_template( "/curl/curl_get.sh")
 		f.write(t.render(username="test@gmail.com", password="xyz", submodule=sub, config=config))
-		
+
 		t = templateEnv.get_template( "/curl/curl_post.sh")
 		j = json_type(db_models[mname][sub])
 		f.write(t.render(json=j, submodule=sub, model=db_models[mname][sub], config=config))
-		
+
 		put_one = templateEnv.get_template( "/curl/curl_put.sh")
 		f.write(put_one.render(json=j, submodule=sub, config=config))
-		
+
 		delete_one = templateEnv.get_template( "/curl/curl_delete.sh")
 		f.write(delete_one.render(submodule=sub, config=config))
 
@@ -366,6 +368,3 @@ def generate_curl_queries(fp, mname, db_models, config):
 				f.write(get_children.render(submodule=sub, config=config, rel=rel, child=db_models[rel['module']][rel['table']]))
 		f.write("\n\n")
 	f.close()
-
-
-
