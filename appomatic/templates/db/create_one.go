@@ -2,7 +2,7 @@
 func CreateOne_{{table_name}}(x *{{struct_name}}) bool {
 
 	err := db.QueryRow(`
-		INSERT INTO {{table_name}}
+		INSERT INTO "{{table_name}}"
 		({% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_cols %},{%endif%}{%endfor%})
 		VALUES ({% for col in post_columns %}${{loop.index}}{% if loop.index is not equalto len_cols %},{%endif%}{%endfor%})
 		RETURNING "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_cols %},{%endif%}{%endfor%}`,

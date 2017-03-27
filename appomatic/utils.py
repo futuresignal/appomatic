@@ -273,6 +273,9 @@ def generate_db(fp, mname, db_models, config):
 		t = templateEnv.get_template( "/db/read_one.go")
 		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_post_cols, len_cols=len(db_models[mname][submodule]['columns'])))
 
+		t = templateEnv.get_template( "/db/read_one_by_id.go")
+		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_post_cols, len_cols=len(db_models[mname][submodule]['columns'])))
+
 		t = templateEnv.get_template( "/db/create_one.go")
 
 		post_values  = postValues(db_models[mname][submodule])

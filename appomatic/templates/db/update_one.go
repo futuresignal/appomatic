@@ -7,7 +7,7 @@ func UpdateOne_{{table_name}}(x *{{struct_name}}) bool {
 		{{col['title']}} = ${{loop.index}},
 		{%endfor%}
 		date_modified = ${{len_cols + 1}}
-		WHERE "id" = ${{len_cols + 2}} AND "deleted" = 'f'`, 
+		WHERE "id" = ${{len_cols + 2}}`, 
 		{% for col in put_cols %}
 		&x.{{col['struct_var']}},
 		{% endfor %}

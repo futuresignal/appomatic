@@ -1,1 +1,1 @@
-ALTER TABLE "{{table_name}}" DROP CONSTRAINT "{{key}}";
+ALTER TABLE "{{table_name}}" DROP CONSTRAINT "{{table_name}}_{{key}}_fkey";
