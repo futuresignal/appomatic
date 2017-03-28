@@ -1,6 +1,6 @@
 
 func ReadOne_{{table_name}}_by_id(id int64) (bool, {{struct_name}}) {
-	var db_struct {{struct_name}}
+	db_struct := {{struct_name}}{}
 	err := db.QueryRow(`
 		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
 		

@@ -69,7 +69,7 @@ class SqlParser:
 		elif line.startswith("COMMENT"):
 			self.state = "comment"
 			self.parse_comment(line)
-		elif line.startswith("ALTER TABLE"):
+		elif line.startswith("ALTER TABLE") and re.search("FOREIGN KEY", line):
 			self.state = "relation"
 			self.parse_rel(line)
 		else:
