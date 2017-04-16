@@ -6,7 +6,7 @@ func ReadOne_{{table_name}}_by_id(id int64) (bool, {{struct_name}}) {
 		
 		FROM "{{table_name}}"
 		WHERE id = $1
-		AND "deleted" = 'f'`, &id).Scan(
+		AND ("deleted" = 'f' OR "deleted" IS NULL)`, &id).Scan(
 		{% for col in model['columns']%}
         &db_struct.{{col['struct_var']}}{% if loop.index is not equalto len_cols %},
         {%endif%}{%endfor%})

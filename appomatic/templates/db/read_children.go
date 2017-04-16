@@ -6,7 +6,7 @@ func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}
 		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
 		
 		FROM "{{table_name}}"
-		WHERE "{{rel['key']}}" = $1 AND "deleted" = 'f'`, &fk)
+		WHERE "{{rel['key']}}" = $1 AND ("deleted" = 'f' OR "deleted" IS NULL)`, &fk)
 	defer rows.Close()
 
 	if err == sql.ErrNoRows {
