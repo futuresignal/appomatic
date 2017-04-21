@@ -1,7 +1,7 @@
 
 func GetAll_{{table_name}}_By_{{table_parent_fkey}}(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
-	fk,err := strconv.ParseInt(vars["{{table_parent}}_id"], 10, 64)
+	fk,err := strconv.ParseInt(vars["{{table_parent_fkey}}_id"], 10, 64)
 	if err != nil {
 		m := `{"error":"Bad Request: No Id found"}`
 		w.WriteHeader(400)
