@@ -23,6 +23,8 @@ postgres2go = {
 	'BIGINT':'*int64',
 	'VARCHAR':'*string',
 	'TEXT':'*string',
+	'JSON':'*json.RawMessage',
+	'JSONB':'*json.RawMessage',
 	'TIMESTAMP WITH TIME ZONE':'time.Time',
 	'TIMESTAMP WITH TIME ZONE(CURRENT_TIMESTAMP)':'time.Time',
 
@@ -317,7 +319,17 @@ def generate_types(fp, mname, db_models, config):
 
 	f = open(fp, "w")
 	t = templateEnv.get_template( "/types/types_header.go")
-	f.write(t.render(module_name=mname, date=time.strftime("%m/%d/%Y")))
+
+	packages = {}
+
+	#check if we need to add json support to this module
+	for sub in db_models[mname]:
+		for c in db_models[mname][sub]['columns']:
+			if c['db_type'].startswith("JSON"):
+				packages["encoding/json"]=True
+				break
+
+	f.write(t.render(module_name=mname, date=time.strftime("%m/%d/%Y"), packages=packages.keys()))
 	for submodule in db_models[mname]:
 		struct_name = submodule[0].upper() + submodule[1:]
 		t = templateEnv.get_template( "/types/simple.go")
