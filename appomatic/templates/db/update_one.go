@@ -1,5 +1,10 @@
 
-func UpdateOne_{{table_name}}(x *{{struct_name}}) bool {
+//
+// Updates one {{table_name}}
+// Params: *{{struct_name}} must include parent id
+// Returns: nil or error
+//
+func UpdateOne_{{table_name}}(x *{{struct_name}}) error {
 
 	_, err := db.Exec(`
 		UPDATE "{{table_name}}" SET 
@@ -13,11 +18,6 @@ func UpdateOne_{{table_name}}(x *{{struct_name}}) bool {
 		{% endfor %}
 		time.Now().Unix(),
 		&x.Id)
-
-	if err != nil {
-		utils.HandleDbError("UpdateOne_{{table_name}}", err)
-		return false
-	}
-	return true
+	return err
 }
 

@@ -1,6 +1,10 @@
 
-
-func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}){
+//
+// Reads all {{table_name}} by {{rel['key']}}
+// Params: id int64 of {{rel['key']}}
+// Returns: []{{struct_name}}, error (can be nil)
+//
+func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) ([]{{struct_name}}, error){
 	items := make([]{{struct_name}}, 0)
 	rows, err := db.Query(`
 		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
@@ -8,12 +12,12 @@ func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}
 		FROM "{{table_name}}"
 		WHERE "{{rel['key']}}" = $1 AND ("deleted" = 'f' OR "deleted" IS NULL)`, &fk)
 	defer rows.Close()
-
+	
+	//note: if no rows are found, assume this isn't an error and return an empty list
 	if err == sql.ErrNoRows {
-		return true, items
+		return items, nil
 	} else if err != nil {
-		utils.HandleDbError("ReadAll_{{table_name}}_By_{{rel['key']}}", err)
-		return false, items
+		return items,err
 	}
 
 	for rows.Next() {
@@ -24,11 +28,10 @@ func ReadAll_{{table_name}}_By_{{rel['key']}}(fk int64) (bool, []{{struct_name}}
 			{%endif%}
 			{% endfor %}
 
-
 		if err != nil {
-			utils.HandleDbError("Error scanning in ReadAll_{{table_name}}_By_{{rel['key']}}", err)
+			return items, err
 		}
 		items = append(items, item)
 	}
-	return true, items
+	return items,err
 }

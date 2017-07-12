@@ -30,6 +30,38 @@ postgres2go = {
 
 }
 
+default_vals = {
+	"*string":"&default_string",
+	"*int64":"&default_int",
+	"*float64":"&default_float",
+	"*json.RawMessage":{'"foo"':'"bar"'},
+	"*bool":"&default_bool",
+}
+
+put_vals = {
+	"*string":"&new_string",
+	"*int64":"&new_int",
+	"*float64":"&new_float",
+	"*json.RawMessage":{'"bar"':'"foo"'},
+	"*bool":"&new_bool",
+}
+
+default_types = {
+	"*string":'default_string := "foo"',
+	"*int64":"default_int := int64(1)",
+	"*float64":"default_float := float64(3.14)",
+	"*json.RawMessage":'{"foo":"bar"}',
+	"*bool":"default_bool := false",
+}
+
+new_types = {
+	"*string":'new_string := "bar"',
+	"*int64":"new_int := int64(321)",
+	"*float64":"new_float := float64(41.3)",
+	"*json.RawMessage":'{"bar":"foo"}',
+	"*bool":"new_bool := false",
+}
+
 class SqlParser:
 	"""
 		a simple sql parser
@@ -166,19 +198,29 @@ def generate_routes(fp, db_models, config):
 	f.write(s)
 	f.close()
 
-def okCols(model):
+def getOkCols(model, useBool=True):
 	"""
-	Defines which columns can be overwritten in an update
+	Defines which columns can be overwritten in an update 
+	useBool = True sets them as a bool 'true' / 'false'
+	useBool = False returns a list of items where the value was 'true'
 	"""
 	ok = {}
+	exclude = ['date_created', 'date_modified', 'deleted', 'password']
 	for col in model["columns"]:
 		if col["db_type"] == 'SERIAL':
 			ok[col['title']] = 'false'
 		elif col['title'].startswith('id_'):
 			ok[col['title']] = 'false'
+		elif col['title'] in exclude:
+			ok[col['title']] = 'false'
 		else:
 			ok[col['title']] = 'true'
+
+	if useBool == False:
+		return [k[0].upper()+k[1:] for k in ok if ok[k] == 'true']
+
 	return ok
+
 
 
 def generate_api(fp, mname, db_models, config):
@@ -190,7 +232,7 @@ def generate_api(fp, mname, db_models, config):
 	generated = {}
 
 	headerT = templateEnv.get_template( "/api/api_header.go")
-	packages = ["net/http",config["path"]+"/modules/utils", "github.com/gorilla/mux", "strconv", "fmt", "log", "encoding/json"]
+	packages = ["net/http",config["path"]+"/modules/utils", "github.com/gorilla/mux", "strconv"]
 	header = headerT.render(module_name=mname, packages=packages, date=time.strftime("%m/%d/%Y"))
 	f.write(header)
 
@@ -204,7 +246,9 @@ def generate_api(fp, mname, db_models, config):
 		f.write(post_one.render(table_name=submodule, struct_name=struct_name))
 
 		put_one = templateEnv.get_template( "/api/put_onev2.go")
-		f.write(put_one.render(table_name=submodule, struct_name=struct_name))
+		ok_cols = getOkCols(db_models[mname][submodule], useBool=False)
+		if len(ok_cols) > 0:
+			f.write(put_one.render(table_name=submodule, struct_name=struct_name, okCols=ok_cols))
 
 		delete_one = templateEnv.get_template( "/api/delete_one.go")
 		f.write(delete_one.render(table_name=submodule, struct_name=struct_name))
@@ -263,7 +307,7 @@ def generate_db(fp, mname, db_models, config):
 	f = open(fp, "w")
 
 	headerT = templateEnv.get_template( "/db/db_header.go")
-	packages = ["database/sql","time", config["path"]+"/modules/utils"]
+	packages = ["database/sql","time"]
 	header = headerT.render(module_name=mname, packages=packages, date=time.strftime("%m/%d/%Y"))
 	f.write(header)
 
@@ -275,14 +319,9 @@ def generate_db(fp, mname, db_models, config):
 		t = templateEnv.get_template( "/db/read_one.go")
 		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_post_cols, len_cols=len(db_models[mname][submodule]['columns'])))
 
-		t = templateEnv.get_template( "/db/read_one_by_id.go")
-		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, model=db_models[mname][submodule], len_post_cols=len_post_cols, len_cols=len(db_models[mname][submodule]['columns'])))
-
 		t = templateEnv.get_template( "/db/create_one.go")
-
 		post_values  = postValues(db_models[mname][submodule])
-
-		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, post_values=post_values, len_cols=len_post_cols, model=db_models[mname][submodule]))
+		f.write(t.render(table_name=submodule, struct_name=struct_name, post_columns=post_columns, post_values=post_values, len_cols=len_post_cols, len_rec_cols=len_post_cols+1, model=db_models[mname][submodule]))
 
 		put_one = templateEnv.get_template( "/db/update_one.go")
 		put_cols = putCols(db_models[mname][submodule])
@@ -312,6 +351,29 @@ def addSpacing(model, minsize):
 		diff = minsize - size
 		col['spacing'] = " "*diff
 	return model
+
+def genDefaults(model, key, m):
+	for col in model['columns']:
+		#skip settting id default
+		if col["db_type"] == 'SERIAL':
+			continue 
+		go_type = col["go_type"]
+
+		if go_type in m:
+			col[key] = m[go_type]
+	return model
+
+def getDefaultTypes(model, m):
+	types = {}
+	for col in model['columns']:
+		#skip settting id default
+		if col["db_type"] == 'SERIAL':
+			continue 
+		go_type = col["go_type"]
+
+		if go_type in m:
+			types[m[go_type]] = True
+	return types
 
 
 def generate_types(fp, mname, db_models, config):
@@ -383,3 +445,28 @@ def generate_curl_queries(fp, mname, db_models, config):
 				f.write(get_children.render(submodule=sub, config=config, rel=rel, child=db_models[rel['module']][rel['table']]))
 		f.write("\n\n")
 	f.close()
+
+def generate_tests(fp, mname, db_models, config):
+	""" Generates tests for our api """
+	f = open(fp+mname+"_test.go", "w")
+
+	th = templateEnv.get_template( "/tests/crud_header.go")
+	f.write(th.render(package_name="integration_tests", package_import=config['path']+"/modules/"+mname))
+
+	for submodule in db_models[mname]:
+		t = templateEnv.get_template( "/tests/crud.go")
+		struct_name = submodule[0].upper() + submodule[1:]
+		model = addSpacing(db_models[mname][submodule], 30)
+		model = genDefaults(model, "value", default_vals)
+		model = genDefaults(model, "put_value", put_vals)
+		dt = getDefaultTypes(model, default_types)
+		nt = getDefaultTypes(model, new_types)
+		route = "/api/"+config['api_version']+"/"+submodule+"/"
+		f.write(t.render(submodule=submodule, module=mname, route=route, model=model, struct_name=struct_name, default_types=dt, new_types=nt))
+
+
+
+
+
+
+
