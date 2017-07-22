@@ -2,7 +2,7 @@
 func PutOne_{{table_name}}(w http.ResponseWriter, r *http.Request){
 	
 	vars := mux.Vars(r)
-	id,err := strconv.ParseInt(vars["{{table_name}}_id"], 10, 64)
+	id,err := strconv.ParseInt(vars["id_{{table_name}}"], 10, 64)
 
 	if err != nil {
 		w.WriteHeader(200)

@@ -1,30 +1,21 @@
 
-func GetAll_{{table_name}}_By_{{table_parent_fkey}}(w http.ResponseWriter, r *http.Request){
+//
+// GetAll_{{table_name}}_By_{{table_parent_fkey}} 
+// Params:  id_{{table_parent_fkey}}
+// Returns: Slice of {{table_name}} as json
+//
+func GetAll_{{table_name}}_By_{{table_parent_fkey}}(w *utils.ResponseWrapper, r *http.Request){
 	vars := mux.Vars(r)
-	fk,err := strconv.ParseInt(vars["{{table_parent_fkey}}_id"], 10, 64)
+	fk,err := strconv.ParseInt(vars["id_{{table_parent_fkey}}"], 10, 64)
 	if err != nil {
-		m := `{"error":"Bad Request: No Id found"}`
-		w.WriteHeader(400)
-		fmt.Fprint(w, m)
+		w.SendResponse(400, map[string]string{"error":"Bad request, no Id found"}, err)
 		return
 	}
-	
-	if ok, items := ReadAll_{{table_name}}_By_{{table_parent_fkey}}(fk); ok {
-		byteArray, err := json.Marshal(&items)
-		if err != nil {
-			w.WriteHeader(500)
-			m := `{"error":"Internal error"}`
-			fmt.Fprint(w, m)
-			return
-		}
-		w.WriteHeader(200)
-		fmt.Fprint(w, string(byteArray))
-		return
-	} else {
-		w.WriteHeader(404)
-		m := `{"error":Resource Not Found"}`
-		fmt.Fprint(w, m)
+	items,err := ReadAll_{{table_name}}_By_{{table_parent_fkey}}(fk);
+	if err != nil {
+		w.SendResponse(500, map[string]string{"error":"Internal error"}, err)
 		return
 	}
+	w.SendResponse(200, items, err)
 }
 

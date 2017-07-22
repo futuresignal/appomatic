@@ -1,35 +1,27 @@
 
-func GetOne_{{table_name}}(w http.ResponseWriter, r *http.Request){
+//
+// GetOne_{{table_name}} Profides our read endpoint
+// Vars: id_{{table_name}}
+// Returns: 
+//
+func GetOne_{{table_name}}(w *utils.ResponseWrapper, r *http.Request){
 	
 	vars := mux.Vars(r)
-	id,err := strconv.ParseInt(vars["{{table_name}}_id"], 10, 64)
+	id,err := strconv.ParseInt(vars["id_{{table_name}}"], 10, 64)
 
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		m := `{"error":"invalid id"}`
-		fmt.Fprint(w, m)
+		w.SendResponse(400, map[string]string{"error":"Invalid id"}, err)
 		return
 	}
 
-	db_struct := {{struct_name}}{Id:&id}
+	db_struct,err := ReadOne_{{table_name}}(id)
+	if err != nil {
+		w.SendResponse(500,  map[string]string{"error":"Interanl error"}, nil)
+		return
+		
+	} 
 
-	if ReadOne_{{table_name}}(&db_struct){
-		byteArray, err := json.Marshal(&db_struct)
-		if err != nil {
-			w.WriteHeader(500)
-			m := `{"error":"Internal error"}`
-			fmt.Fprint(w, m)
-			return
-		}
-		w.WriteHeader(200)
-		fmt.Fprint(w, string(byteArray))
-		return
-	} else {
-		w.WriteHeader(500)
-		m := `{"error":"Internal error"}`
-		fmt.Fprint(w, m)
-		return
-	}
+	w.SendResponse(200, db_struct, nil)
+	return
 }
 

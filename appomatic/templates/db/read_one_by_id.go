@@ -1,5 +1,9 @@
 
-func ReadOne_{{table_name}}_by_id(id int64) (bool, {{struct_name}}) {
+
+//
+// Read one {{table_name}} by Id, returns a new struct 
+//
+func ReadOne_{{table_name}}_ById(id int64) ({{struct_name}}, error) {
 	db_struct := {{struct_name}}{}
 	err := db.QueryRow(`
 		SELECT "id", {% for col in post_columns %}"{{col['title']}}"{% if loop.index is not equalto len_post_cols %},{%endif%}{%endfor%}
@@ -12,10 +16,7 @@ func ReadOne_{{table_name}}_by_id(id int64) (bool, {{struct_name}}) {
         {%endif%}{%endfor%})
 	
 	if err == sql.ErrNoRows{
-		return false, db_struct
-	} else if err != nil {
-		utils.HandleDbError("ReadOne_{{struct_name}}",err)
-		return false, db_struct
-	}
-	return true, db_struct
+		return db_struct, nil
+	} 
+	return db_struct, err
 }

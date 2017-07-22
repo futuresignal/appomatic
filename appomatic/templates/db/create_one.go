@@ -1,5 +1,11 @@
 
-func CreateOne_{{table_name}}(x *{{struct_name}}) bool {
+
+//
+// CreateOne_{{table_name}}
+// Params: {{table_name}} pointer
+// Returns: nil or error
+//
+func CreateOne_{{table_name}}(x *{{struct_name}}) error {
 
 	err := db.QueryRow(`
 		INSERT INTO "{{table_name}}"
@@ -10,13 +16,10 @@ func CreateOne_{{table_name}}(x *{{struct_name}}) bool {
 		{{val}}{% if loop.index is not equalto len_cols %},
 		{%endif%}{% endfor %}).Scan(
 		{% for col in model['columns'] %}
-		&x.{{col['struct_var']}}{% if loop.index is not equalto len_cols+1 %},
+		&x.{{col['struct_var']}}{% if loop.index is not equalto len_rec_cols %},
 		{% endif %}{% endfor %})
 
-	if err != nil {
-		utils.HandleDbError("CreateOne_{{table_name}}", err)
-		return false
-	}
-
-	return true
+	return err
 }
+
+

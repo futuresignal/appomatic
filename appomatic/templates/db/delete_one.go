@@ -1,5 +1,11 @@
 
-func DelOne_{{table_name}}(id int64) bool {
+
+//
+// Deletes one {{table_name}} by id
+// Params: int64 id
+// Returns: nil or error
+//
+func DelOne_{{table_name}}(id int64) error {
 	_, err := db.Exec(`
 		UPDATE "{{table_name}}"
 		SET "deleted" = 't',
@@ -7,10 +13,7 @@ func DelOne_{{table_name}}(id int64) bool {
 		WHERE id = $1`, 
 		id, 
 		time.Now().Unix())
-
-	if err != nil {
-		utils.HandleDbError("DelOne_{{table_name}}", err)
-		return false
-	}
-	return true
+	return err
 }
+
+

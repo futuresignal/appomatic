@@ -1,38 +1,47 @@
 
-func PutOne_{{table_name}}(w http.ResponseWriter, r *http.Request){
+//
+// PutOne_{{table_name}} Profides our update endpoint
+// Only specific rows are updateable (non pk, non fk)
+// Params: 
+// Returns: 
+//
+func PutOne_{{table_name}}(w *utils.ResponseWrapper, r *http.Request){
 	
 	vars := mux.Vars(r)
-	id,err := strconv.ParseInt(vars["{{table_name}}_id"], 10, 64)
+	id,err := strconv.ParseInt(vars["id_{{table_name}}"], 10, 64)
 
 	if err != nil {
-		w.WriteHeader(400)
-		m := `{"error":"Bad Request: No Id found"}`
-		fmt.Fprintf(w, m)
+		w.SendResponse(400, map[string]string{"error":"Invalid id"}, err)
 		return
 	}
 
 	//decode json
-	var db_struct {{struct_name}}
-	if ok := utils.DecodePost(&db_struct, w, r); !ok {
-		w.WriteHeader(400)
-		m := `{"error":"Bad Request: Not able to decode object"}`
-		fmt.Fprintf(w, m)
+	var new_struct {{struct_name}}
+	if err = utils.DecodePost(&new_struct, w, r); err != nil {
+		w.SendResponse(400, map[string]string{"error":"Not able to decode object"}, err)
 		return
 	}
 
-	//make sure to add the id to this struct
-	db_struct.Id = &id
-	
-	if UpdateOne_{{table_name}}(&db_struct){
-		w.WriteHeader(201)
-		byteArray := utils.MarshalGet(&db_struct, w, r)
-		fmt.Fprint(w, string(byteArray))
-		return
-	} else {
-		m := `{"error":"Resource not updated"}`
-		w.WriteHeader(500)
-		fmt.Fprint(w, m)
+	//get the current DB version of this struct by ID
+	current_struct,err := ReadOne_{{table_name}}(id)
+	if err != nil || current_struct.Id == nil {
+		w.SendResponse(500, map[string]string{"error":"Unable to read existing item"}, err)
 		return
 	}
+
+	//update any fields allowed to be ovewritten
+	{% for col in okCols %}
+	current_struct.{{col}} = new_struct.{{col}}
+	{% endfor %}
+	
+	err = UpdateOne_{{table_name}}(&new_struct)
+	if err != nil {
+		w.SendResponse(500, map[string]string{"error":"Resource not updated"}, err)
+		return
+	} 
+
+	w.SendResponse(200, new_struct, err)
+	return
+	
 }
 
