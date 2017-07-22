@@ -24,7 +24,7 @@ func PutOne_{{table_name}}(w *utils.ResponseWrapper, r *http.Request){
 
 	//get the current DB version of this struct by ID
 	current_struct,err := ReadOne_{{table_name}}(id)
-	if err != nil {
+	if err != nil || current_struct.Id == nil {
 		w.SendResponse(500, map[string]string{"error":"Unable to read existing item"}, err)
 		return
 	}

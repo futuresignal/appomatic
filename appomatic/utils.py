@@ -192,7 +192,6 @@ def generate_main(fp, db_models, config):
 def generate_routes(fp, db_models, config):
 	""" creates and adds any generated routes """
 	routes = templateEnv.get_template( "/main/routes.go")
-
 	s = routes.render(db_models=db_models, config=config, date=time.strftime("%m/%d/%Y"), package="server")
 	f = open(fp, "w")
 	f.write(s)
@@ -247,8 +246,7 @@ def generate_api(fp, mname, db_models, config):
 
 		put_one = templateEnv.get_template( "/api/put_onev2.go")
 		ok_cols = getOkCols(db_models[mname][submodule], useBool=False)
-		if len(ok_cols) > 0:
-			f.write(put_one.render(table_name=submodule, struct_name=struct_name, okCols=ok_cols))
+		f.write(put_one.render(table_name=submodule, struct_name=struct_name, okCols=ok_cols))
 
 		delete_one = templateEnv.get_template( "/api/delete_one.go")
 		f.write(delete_one.render(table_name=submodule, struct_name=struct_name))
