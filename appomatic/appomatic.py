@@ -45,8 +45,9 @@ def main():
         relPath = "/".join([os.getcwd(), config["tools_dir"], "queries", m, ""])
         utils.setupPathFolder(relPath)
         utils.generate_curl_queries(relPath+"gen_queries.sh", m, db_models, config)
-        #removing this until it's stable
-        #utils.generate_tests(config["integration_tests_dir"], m, db_models, config)
+        
+        #TODO: generate tests with dummy data for CRUD operations
+        utils.generate_tests(config["integration_tests_dir"], m, db_models, config)
 
     print("Generated ", len(db_models), " Modules ", sum([len(db_models[x]) for x in db_models]), " Submodules")
 
