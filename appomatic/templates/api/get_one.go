@@ -16,7 +16,7 @@ func GetOne_{{table_name}}(w *utils.ResponseWrapper, r *http.Request){
 
 	db_struct,err := ReadOne_{{table_name}}(id)
 	if err != nil {
-		w.SendResponse(500,  map[string]string{"error":"Interanl error"}, nil)
+		w.SendResponse(500,  map[string]string{"error":"Interanl error"}, err)
 		return
 		
 	} 
