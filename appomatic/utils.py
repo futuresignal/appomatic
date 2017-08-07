@@ -17,6 +17,7 @@ postgres2go = {
 	'STRING':'*string',
 	'INTEGER':'*int64',
 	'DECIMAL':'*float64',
+	'NUMERIC':'*float64',
 	'SERIAL':'*int64',
 	'MEDIUMTEXT':"*string",
 	'BOOLEAN':"*bool",
@@ -82,6 +83,9 @@ class SqlParser:
 		#package all of our tables into modules
 		modules = {}
 		for k in self.app:
+			if 'module' not in self.app[k]['comment']:
+				continue
+
 			mname = self.app[k]['comment']['module']
 			if mname not in modules:
 				modules[mname] = {k:self.app[k]}
@@ -116,7 +120,11 @@ class SqlParser:
 
 	def parse_table(self, line):
 		""" Parses table name, creates an inner dict in the app"""
-		name = re.search(r'".*?"', line).group(0).replace('"','')
+		name = re.search(r'".*?"', line)
+		if name == None:
+			#print("Error parsing table name")
+			return
+		name = name.group(0).replace('"','')
 		self.create_table(name)
 		self.current_table = name
 
@@ -139,9 +147,17 @@ class SqlParser:
 
 	def parse_comment(self, line):
 		""" parses the comment as json, then adds to the current table """
+		if self.current_table == "":
+			return
 		com = re.search(r"'.*?'", line).group(0)
 		com = com.replace("'","")
-		self.app[self.current_table]["comment"] = json.loads(com)
+		d = {}
+		try:
+			d = json.loads(com)
+		except:
+			#invalid comment type
+			return
+		self.app[self.current_table]["comment"] = d
 
 
 	def parse_rel(self, line):
@@ -153,6 +169,9 @@ class SqlParser:
 
 		#print("parent", parent_table)
 		#print("child", child_table)
+
+		if 'module' not in self.app[parent_table]['comment']:
+			return
 
 		parent_module = self.app[parent_table]['comment']['module']
 		child_module = self.app[child_table]['comment']['module']
