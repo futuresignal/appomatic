@@ -31,7 +31,9 @@ func PutOne_{{table_name}}(w *utils.ResponseWrapper, r *http.Request){
 
 	//update any fields allowed to be ovewritten
 	{% for col in okCols %}
-	current_struct.{{col}} = new_struct.{{col}}
+	if new_struct.{{col}} != nil {
+		current_struct.{{col}} = new_struct.{{col}}
+	}
 	{% endfor %}
 	
 	err = UpdateOne_{{table_name}}(&new_struct)
